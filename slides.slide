@@ -5,4 +5,479 @@ Miguel Ángel Jimeno
 
 * Índice
 
-Some text
+- Cómo ejecuta Android una aplicación
+- Qué es una aplicación Android
+- Estructura de una aplicación
+- Permisos
+- Firma de aplicaciones
+- Componentes
+- Obtener una aplicación
+- Decompilación
+- Qué buscar en ellas
+- PoC || GTFO
+
+
+* Cómo ejecuta Android una aplicación
+
+* 
+
+1 aplicación → 1 *usuario*
+
+1 usuario → acceso a los ficheros de 1 aplicación
+
+1 aplicación → 1 *proceso*
+
+1 proceso → 1 *VM*
+
+Principio del *mínimo* *privilegio*
+Si se quiere recibir más privilegios, deben ser otorgados expresamente
+Ciertos permisos solamente son para el sistema
+
+Todo muy seguro, ¿no? 
+
+Almacenamiento externo
+2 aplicaciones firmadas con el mismo certificado → mismo *ID*
+
+
+*  Qué es una aplicación Android
+
+* 
+
+Es un ZIP con otro nombre (:
+
+
+* Estructura de una aplicación
+
+* 
+
+.code res/tree
+
+
+Bueno... esto idealmente. Luego hay quien:
+
+Claves privadas en `res`
+JSON con información de APIs en `res/layout`
+Licencias en almacenamiento externo (Panda Antivirus)
+
+
+* Permisos
+
+* 
+
+Por defecto: *ninguno*
+
+.code res/permission_example.xml
+
+Por ejemplo:
+
+.code res/declaration.xml
+
+* 
+
+Se puede definir un permiso propio:
+
+.code res/definition.xml
+
+Que podría usarse:
+
+.code res/usage.xml
+
+* 
+
+Hay ciertas acciones protegidas que requieren solicitar permisos:
+
+- Llamadas al sistema (evitar uso indebido de funcionalidades críticas)
+
+- Inicio de actividades (evitar que app A inicie actividades de app Z)
+
+- Envío/recepción de broadcast (controlar quién puede enviarlos/recibirlos)
+
+- Acceso a content providers (que otras aplicaciones no puedan leer la información)
+
+- Inicio o enlace con servicios (evitar uso fraudulento)
+
+* 
+
+Clasificación:
+
+- Normales: acceso a áreas externas al sandbox de la aplicaicón pero que no representan un riesgo alto para la privacidad o funcionalidad. Por ejemplo: modificar la zona horaria
+
+- Peligrosos (no lo digo yo, lo dice Google): áreas que sí pueden ser riesgos como envío de SMS, acceso al micrófono, etc. El usuario debe otorgarlos expresamente (o no).
+
+
+
+Hay 2 particulares:
+
+- SYSTEM_ALERT_WINDOW
+- WRITE_SETTINGS
+
+* 
+
+¿Cuándo *NO* hace falta otorgarlos expresamente?
+
+Si ya se dispone de un permiso del mismo grupo que el deseado, se recibe acceso de manera transparente al usuario
+
+Algunos grupos de permisos son: CALENDAR, LOCATION, PHONE, etc
+
+* 
+
+Un permiso puede solicitarse en tiempo de ejecución
+
+.code res/runtime.java
+
+
+* Firma de aplicaciones
+
+* 
+
+Android requiere que los APKs estén firmados digitalmente. Permite identificar al autor de una app
+
+Para poder instalar actualizaciones → todas las versiones firmadas con el *mismo* certificado
+
+Generar certificado:
+
+.code res/gen
+
+Alinear ZIP:
+
+.code res/align
+
+Firmar:
+
+.code res/sign
+
+Aunque Uber publicó [[https://github.com/patrickfav/uber-apk-signer][una herramienta]] para automatizarlo
+
+
+
+* Componentes
+
+* 
+
+Actividades → punto de entrada para la interacción con el usuario. Una aplicación puede tener muchas actividades independientes entre ellas. Se pueden (*deben*) registrar permisos específicos para cada una
+
+Servicios → mantienen las aplicaciones en funcionamiento en segundo plano. Por ejemplo: comprobar si hay actualizaciones en un chat
+
+Receivers → permiten al sistema enviar eventos a la aplicación fuera del diagrama de uso habitual. Permiten, por ejemplo, crear una alarma que enviará una notificación en un momento determinado a la pantalla del sistema
+
+Content providers → permiten administrar un conjunto compartido de datos
+
+
+
+* Obtener una aplicación
+
+
+* Opciones:
+
+- Servicios online
+- Repositorios públicos
+- Apps que permiten copiar el APK de otras aplicaciones
+- Rootear el dispositivo y obtenerlas
+- `adb`
+
+
+* adb
+
+Esta investigación va a abarcar `adb`
+
+- Listado de todas las aplicaciones instaladas (usuario y sistema): adb shell pm list packages -f
+
+- Descarga de cualquier aplicación: adb pull /ruta/del/paquete/nombre.apk
+
+
+.image res/adb_pull.png _ 700
+
+
+
+* Decompilación
+
+* Qué permite
+
+Decodificar los recursos a su forma original y/o rebuildear la aplicación tras modificarla. Transforma el bytecode `Dalvik` a código Smali
+
+Una de las herramientas más conocidas es [[https://ibotpeaches.github.io/Apktool/documentation/][apktool]]
+
+.code res/apktool_decode
+
+.code res/apktool_build
+
+
+* dex2jar
+
+Convierte los ficheros `classes.dex` a ficheros JAR comunes. Tras ello se pueden leer con cualquier decompilador Java como [[http://jd.benow.ca/][JD]]
+
+.code res/dexjar
+
+.code res/jd
+
+Otros decompiladores son:
+
+- [[https://siis.cse.psu.edu/dare/][Dare]]
+
+- [[https://www.brouhaha.com/~eric/software/mocha/][Mocha]]
+
+- [[https://bitbucket.org/mstrobel/procyon/wiki/Java%20Decompiler][Proycon]]
+
+* 
+
+.image res/jd.png _ 800
+
+* Transformación directa
+
+Al hacer la conversión Dalvik → JAR → Java se pierde información útil
+
+Hay herramientas que evitan el paso intermedio como [[http://www.android-decompiler.com/][JEB]] (comercial) o [[https://github.com/androguard/androguard][Androguard]]
+
+
+* Androguard
+
+Interfaz interactiva
+
+Existe la posibilidad de usarlo como paquete desde otras herramientas
+
+Análisis completo:
+
+- a: objeto APK donde se puede encontrar información como el nombre del paquete, los permisos, el manifiesto o los recursos
+
+- d: objeto DalvikVMFormat corresponde al fichero DEX donde se encuentran las clases, métodos, strings, etc
+
+- dx: objeto Analysis corresponde al resultado del análisis de la aplicación
+
+* 
+
+.image res/bq_readers_ota_activities.png _ 800
+
+
+* Qué buscar en ellas
+
+* Ficheros desprotegidos
+
+Algunas rutas suelen contener ficheros importantes usados por los desarrolladores: credenciales de servicios, tokens privados, certificados, etc
+
+Los lugares típicos son:
+
+- `res/raw`
+
+- `assets/`
+
+A veces no son vulnerabilidades como tal. En el caso de [[https://www.avira.com/es/avira-password-manager][Avira Password Manager]], se puede encontrar el mapa completo de las APIs empleadas
+
+* 
+
+.image res/avira.png _ 600
+
+* Almacenamiento externo
+
+Comprobar estática o dinámicamente qué rutas de almacenamiento externo emplea la aplicación y qué guarda en ellas
+
+Podría hacerse simplemente con un grep -nr getExternalStorage app/src/
+
+
+* Uso de criptografía insegura
+
+Algunas aplicaciones emplean criptografía insegura o con claves hardcodeadas en la propia aplicaicón
+
+La aplicación de autobuses de U-TAD emplea claves *robustas* para su criptografía
+
+.image res/utad_cripto.png _ 700
+
+* Uso de WebViews
+
+Las aplicaciones basadas en WebViews pueden recibir cualquier ataque basado en Javascript como las aplicaciones web habituales
+
+Si el motor usado por el móvil no está actualizado (gran parte del mercado de Android *NO* está actualizado), existen pruebas de concepto para ataques de *Remote Code Execution* y *UXSS*
+
+Además, hay ciertas propiedades como *setAllowFileAccess* que, si han sido activadas, pueden facilitar mucho los ataques
+
+* Consultas a bases de datos
+
+A veces los desarrolladores creen que por el hecho de ser una aplicación móvil, nadie tratará de inyectar código en las consultas a bases de datos
+
+.image res/bus.png _ 1000
+
+
+* Actividades exportadas
+
+Cualquier actividad marcada como exportable que no tenga permisos específicos asociados, puede ser lanzada desde otras aplicaciones
+
+En el caso de *BQ*, hay una actividad de fábrica (requiere permisos del sistema) exportada que sirve para reiniciar el dispositivo
+
+.image res/activity_reboot.png _ 750
+
+
+* 
+
+Explotar dicho error simplemente requiere instalar una aplicación que inicie la actividad vulnerable:
+
+.image res/exploit_reboot.png _ 700
+
+* 
+
+.image res/app_reboot.png _ 300
+
+
+* Automatización del análisis
+
+* Qark
+
+Herramienta desarrollada por LinkedIn [[https://github.com/linkedin/qark][github.com/linkedin/qark]]
+
+.code res/qark
+
+* 
+
+Su uso es bastante simple:
+
+.code res/qark_run
+
+* 
+
+.image res/reporte_resultado.png _ 800
+
+
+* Drozer
+
+[[https://github.com/mwrlabs/drozer][Drozer]] permite instalar un agente en el dispositivo (o emulador) e interactuar desde una interfaz intuitiva
+
+.image res/drozer_console.png _ 500
+
+* 
+
+El agente es un simple APK que se instala en el dispositivo
+
+.image res/drozer_agent.png _ 300
+
+* 
+
+Su uso es intuitivo y permite añadir módulos creados por la comunidad
+
+.image res/diva1.png _ 600
+
+* 
+
+.image res/diva2.png _ 600
+
+* PoC || GTFO
+
+* Facbricante BQ
+
+* Disclaimer
+
+.image res/facepalm.png _ 600
+
+
+* 
+
+Uno de los *secret* *codes* del dispositivo inicia una de sus aplicaciones:
+
+.code res/secret
+
+Al iniciar la actividad, se solicita una contraseña
+
+Sin embargo, si se analiza la aplicación...
+
+
+* 
+
+.image res/0day.png _ 700
+
+* 
+
+La aplicación permite ejecutar pruebas de GPS, SIM, RAM, CPU, etc. Hasta ahora todo normal para una app del fabricante.
+
+.image res/medioday.png _ 250
+
+* 
+
+Una de las opciones permite enviar los resultados a sus servidores. ¿Cómo?
+
+.image res/1day.png _ 900
+
+- Se puede acceder a la cuenta y cambiar la contraseña. Si se hace, ningún terminal *BQ* puede enviar el resultado.
+- La aplicación web contiene vulnerabilidades que permiten leer información de otros dispositivos o modificar sus datos
+
+* 
+
+Los terminales *BQ* traen preinstalado el antivirus [[https://www.pandasecurity.com/spain/homeusers/solutions/mobile-security/][Panda Security]]
+
+En caso de contratar seguro, se activa la aplicación. ¿Cómo se comprueba?
+
+- El nombre de la licencia siempre será pms_license.dat
+
+- Su ruta podrá ser /data/data/com.pandasecurity.pandaav/files/ o /data/panda
+
+- La respuesta al comprobar el seguro del dispositivo contendrá alguno de los siguientes campos: authorizationCode, code, error, serialNumber, Success
+
+
+.image res/insurance.png _ 700
+
+* 
+
+Una vez se abre la aplicación del seguro de BQ, la comprobación lee la respuesta JSON recibida a una petición HTTP y:
+
+- Si el código de error es menor o igual que 0, se asume licencia no válida.
+
+- Si el código es mayor que 0 y el siguiente código retorna true, se considera una licencia válida: 
+
+.code res/panda_code
+
+
+- En cualquier otro caso se asume una licencia no válida
+
+* 
+
+.image res/code_flow.png _ 700
+
+* 
+
+Si el fichero existe cuando se realiza la comprobación (da igual su contenido), se activa la aplicación de Panda preinstalada en el dispositivo (*com.pandasecurity.pandaav*)
+
+
+* 
+
+Todos los dispositivos de *BQ* traen algunas aplicaciones de prueba activadas por defecto:
+
+- Engineer Toolkit
+
+.image res/engineer.png _ 170
+
+- MMI Test
+
+- GPS Test
+
+
+* Operación Triunfo
+
+Contiene tokens secretos de acceso de *RTVE* y vulnerabilidades que permiten votar varias veces
+
+.image res/ot.png _ 700
+
+
+* EMT Madrid
+
+.image res/facepalm.png _ 600
+
+* 
+
+.image res/emt.png _ 500
+
+
+* Otros
+
+* Clue
+
+IDOR que permite ver/editar información sobre el período de cualquier usuaria
+
+No permiten hacer *disclosure*, pero la vulnerabilidad lleva sin parchear más de 90 días
+
+
+* Bucket de AWS cuya URL se encontraba en la aplicación y que tenía permisos para editar, subir oeliminar ficheros
+
+.image res/s3.png _ 700
+
+
+* Aplicación que enviaba información privada a través de HTTP en texto plano
+
+.image res/plaintext.png _ 700
+
+

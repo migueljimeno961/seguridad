@@ -1,0 +1,6 @@
+<permission
+    android:name="com.utad.seguridad.permission.CONTROL_EXAMPLE_APP"
+    android:description="@string/control_description"
+    android:icon="@mipmap/ic_launcher"
+    android:label="@string/control_label"
+    android:protectionLevel="normal"/>

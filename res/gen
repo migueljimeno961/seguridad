@@ -1,0 +1,1 @@
+keytool -genkey -v -keystore utad.keystore -keyalg RSA -keysize 2048 -alias utad

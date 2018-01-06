@@ -1,0 +1,7 @@
+docker run -t -i -v /home/jimeno/android:/apk:Z qark
+
+python qarkMain.py --source 1 \
+  --pathtoapk /apk/plusdede/base.apk \
+  --exploit 0 \
+  --basesdk /qark/android-sdk-linux \
+  --reportdir /tmp/reporte_plusdede

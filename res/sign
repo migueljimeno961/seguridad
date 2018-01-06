@@ -1,0 +1,2 @@
+jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+-keystore utad.keystore utad-seguridad_aligned.apk utad

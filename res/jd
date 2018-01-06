@@ -1,0 +1,2 @@
+java -jar $HOME/android/jd-gui-1.4.0.jar base-dex2jar.jar 
+

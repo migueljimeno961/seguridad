@@ -1,0 +1,2 @@
+// build bar folder into new_bar APK
+apktool b bar -o new_bar.apk

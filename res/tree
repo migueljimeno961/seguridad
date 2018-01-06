@@ -1,0 +1,11 @@
+project
+├── Android: bibliotecas de terceros en JAR
+├── AndroidManifest.xml: información sobre permisos, servicios, vistas, actividades, etc
+├── assets: contiene recursos sin soporte nativo para distintas representacines
+├── gen: ficheros Java generados automáticamente (común R.java con constantes)
+├── res: recursos con soporte nativo para representaciones
+│   ├── drawable: imágenes, iconos, etc
+│   ├── layout: elementos UI
+│   └── Values: pares de clave <-> valor dentro de XML (varios idiomas por ejemplo)
+└── src: ficheros con clases y actividades. Misma estructura que proyectos Java
+

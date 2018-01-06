@@ -1,0 +1,1 @@
+zipalign -p 4 utad-seguridad.apk utad-seguridad_aligned.apk

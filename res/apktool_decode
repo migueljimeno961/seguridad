@@ -1,0 +1,2 @@
+// Decode bar APK into /data/bar folder
+apktool d bar.apk -o /data/bar

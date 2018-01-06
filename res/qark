@@ -1,0 +1,22 @@
+FROM python:2.7
+LABEL url "https://www.github.com/linkedin/qark"
+RUN apt-get update && apt-get -y install openjdk-7-jre-headless curl \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /qark
+WORKDIR /qark
+
+ENV ANDROID_SDK_VERSION r24.3.4
+ENV HOST_OS linux
+ENV ANDROID_SDK_PACKAGE="android-sdk_${ANDROID_SDK_VERSION}-${HOST_OS}.tgz"
+
+RUN curl -s https://dl.google.com/android/${ANDROID_SDK_PACKAGE} -o ${ANDROID_SDK_PACKAGE} \
+  && apt-get purge -y curl && tar xzf ${ANDROID_SDK_PACKAGE} \
+  && rm -f ${ANDROID_SDK_PACKAGE}
+
+ADD qark requirements.txt /qark/
+RUN pip install -r requirements.txt && rm -rf /root/.cache
+RUN mkdir /apk
+VOLUME /apk
+CMD ["/bin/bash"]
+

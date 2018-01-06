@@ -1,0 +1,3 @@
+PandaActivity.saveLicenseFile(authorizationCode.getString(
+    PandaActivity.EXTRA_AUTH), this.mContext)
+

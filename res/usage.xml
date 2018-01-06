@@ -1,0 +1,7 @@
+<receiver
+    android:name="com.utad.seguridad.MyReceiver"
+    android:permission="com.utad.seguridad.permission.CONTROL_EXAMPLE_APP">
+    <intent-filter android:priority="999">
+        <action android:name="com.utad.seguridad.REQUEST_RECEIVER"/>
+    </intent-filter>
+</receiver>
